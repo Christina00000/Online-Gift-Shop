@@ -1,0 +1,190 @@
+package com.example.onlinegiftshop;
+
+import androidx.appcompat.app.AppCompatActivity;
+import android.os.Bundle;
+import android.view.View;
+import android.widget.Button;
+import android.widget.EditText;
+import android.widget.TextView;
+
+import java.util.ArrayList;
+import java.util.List;
+
+class Product {
+    String name;
+    String country;
+    double price;
+    int quantity;
+
+    public Product(String name, String country, double price, int quantity) {
+        this.name = name;
+        this.country = country;
+        this.price = price;
+        this.quantity = quantity;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public double getPrice() {
+        return price;
+    }
+
+    public int getQuantity() {
+        return quantity;
+    }
+
+    public void setQuantity(int quantity) {
+        this.quantity = quantity;
+    }
+}
+
+class Cart {
+    private List<Product> products = new ArrayList<>();
+
+    public void addToCart(Product product) {
+        products.add(product);
+    }
+
+    public void removeFromCart(String productName) {
+        for (Product product : products) {
+            if (product.getName().equalsIgnoreCase(productName)) {
+                products.remove(product);
+                break;
+            }
+        }
+    }
+
+    public double getTotalPrice() {
+        double total = 0;
+        for (Product product : products) {
+            total += product.getPrice();
+        }
+        return total;
+    }
+
+    public String getCartDetails() {
+        if (products.isEmpty()) {
+            return "Корзина пуста";
+        }
+        StringBuilder details = new StringBuilder("Товары в корзине:\n");
+        for (Product product : products) {
+            details.append(product.getName()).append(" - ").append(product.getPrice()).append(" руб.\n");
+        }
+        return details.toString();
+    }
+}
+
+class Store {
+    protected List<Product> products = new ArrayList<>();
+    private double totalSales = 0;
+
+    public void addProduct(Product product) {
+        products.add(product);
+    }
+
+    public void updateProduct(String productName, double newPrice, int newQuantity) {
+        for (Product product : products) {
+            if (product.getName().equalsIgnoreCase(productName)) {
+                product.setQuantity(newQuantity);
+                product.price = newPrice;
+            }
+        }
+    }
+
+    public void removeProduct(String productName) {
+        products.removeIf(product -> product.getName().equalsIgnoreCase(productName));
+    }
+
+    public String getSalesStats() {
+        return "Общая выручка: " + totalSales + " руб.";
+    }
+
+    public void sellProduct(Product product) {
+        if (product.getQuantity() > 0) {
+            totalSales += product.getPrice();
+            product.setQuantity(product.getQuantity() - 1);
+        }
+    }
+
+    public String getProductsList() {
+        StringBuilder list = new StringBuilder("Список товаров:\n");
+        for (Product product : products) {
+            list.append(product.getName())
+                    .append(" (")
+                    .append(product.getQuantity())
+                    .append(") - ")
+                    .append(product.getPrice())
+                    .append(" руб. Количество: ")
+                    .append(product.getQuantity())
+                    .append("\n");
+        }
+        return list.toString();
+    }
+}
+
+public class MainActivity extends AppCompatActivity {
+
+    private Store store = new Store();
+    private Cart cart = new Cart();
+
+    private TextView productsTextView, cartTextView, statisticsTextView;
+    private EditText productNameInput;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+
+        productsTextView = findViewById(R.id.productsTextView);
+        cartTextView = findViewById(R.id.cartTextView);
+        statisticsTextView = findViewById(R.id.statisticsTextView);
+        productNameInput = findViewById(R.id.productNameInput);
+
+        Button addToCartButton = findViewById(R.id.addToCartButton);
+        Button checkoutButton = findViewById(R.id.checkoutButton);
+        Button updateStatsButton = findViewById(R.id.updateStatsButton);
+
+        initializeStore();
+
+        productsTextView.setText(store.getProductsList());
+
+        addToCartButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                String productName = productNameInput.getText().toString();
+                for (Product product : store.products) {
+                    if (product.getName().equalsIgnoreCase(productName)) {
+                        cart.addToCart(product);
+                        cartTextView.setText(cart.getCartDetails());
+                        break;
+                    }
+                }
+            }
+        });
+
+        checkoutButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                for (Product product : store.products) {
+                    store.sellProduct(product);
+                }
+                cartTextView.setText("Корзина пуста");
+            }
+        });
+
+        updateStatsButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                statisticsTextView.setText(store.getSalesStats());
+            }
+        });
+    }
+
+    private void initializeStore() {
+        store.addProduct(new Product("Cup", "Россия", 300.0, 10));
+        store.addProduct(new Product("T-shirt", "США", 1200.0, 5));
+        store.addProduct(new Product("Magnet", "Китай", 50.0, 100));
+    }
+}
